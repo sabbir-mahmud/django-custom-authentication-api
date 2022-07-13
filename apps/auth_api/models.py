@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 
 class UserManager(BaseUserManager):
     # create user
-    def create_user(self, email, password=None):
+    def create_user(self, email, password=None, confirm_password=None):
         if not email:
             raise ValueError('Enter a valid email')
 
