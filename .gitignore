@@ -1,0 +1,10 @@
+/auth-venv
+/db.sqlite3
+/Media/profile_pics
+/.env
+/.vscode
+/db.sqlite3
+__pycache__/
+*.log
+*.pot
+*.pyc
