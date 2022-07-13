@@ -1,6 +1,6 @@
 # imports
 from rest_framework import serializers
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeError
@@ -9,6 +9,9 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.mail import send_mail
 from django.conf import settings
 from .models import Profile
+
+# User Model
+User = get_user_model()
 
 # serializer for user details
 
@@ -26,7 +29,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     email = serializers.EmailField(
         required=True,
-        validators=[UniqueValidator(queryset=User.objects.all())]
+        validators=[UniqueValidator(queryset=User.object.all())]
     )
     password = serializers.CharField(
         write_only=True, required=True, validators=[validate_password])
@@ -34,7 +37,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'confirm_password',
+        fields = ('password', 'confirm_password',
                   'email', 'first_name', 'last_name')
         extra_kwargs = {
             'first_name': {'required': True},
@@ -48,8 +51,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        user = User.objects.create(
-            username=validated_data['username'],
+        user = User.object.create(
             email=validated_data['email'],
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name']
@@ -100,12 +102,10 @@ class PasswordResetEmailSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         email = attrs.get('email')
-        if User.objects.filter(email=email).exists():
-            user = User.objects.get(email=email)
+        if User.object.filter(email=email).exists():
+            user = User.object.get(email=email)
             uid = urlsafe_base64_encode(force_bytes(user.id))
-            print('Encoded UID', uid)
             token = PasswordResetTokenGenerator().make_token(user)
-            print('Password Reset Token', token)
             link = f'http://localhost:3000/reset_password/{uid}/{token}'
             print('Password Reset Link', link)
             # Send EMail
@@ -122,7 +122,6 @@ class PasswordResetEmailSerializer(serializers.Serializer):
 
 
 # Serializer for resetting password
-
 
 class PasswordResetSerializer(serializers.Serializer):
 
@@ -144,7 +143,7 @@ class PasswordResetSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     "Password and Confirm Password doesn't match")
             id = smart_str(urlsafe_base64_decode(uid))
-            user = User.objects.get(id=id)
+            user = User.object.get(id=id)
             if not PasswordResetTokenGenerator().check_token(user, token):
                 raise serializers.ValidationError(
                     'Token is not Valid or Expired')
